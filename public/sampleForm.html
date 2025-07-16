@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Test Backend Validation</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2rem;
+        max-width: 400px;
+        margin: auto;
+      }
+      input,
+      button {
+        width: 100%;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+      }
+      .error {
+        color: red;
+      }
+      .success {
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Create User (Test Validation)</h2>
+
+    <form id="userForm" novalidate>
+      <input type="text" name="name" placeholder="Name" />
+      <input type="text" name="email" placeholder="Email" />
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="message"></div>
+
+    <script>
+      const form = document.getElementById("userForm");
+      const messageEl = document.getElementById("message");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = {
+          name: formData.get("name"),
+          email: formData.get("email"),
+        };
+
+        try {
+          const res = await fetch("http://localhost:3000/create-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          const result = await res.json();
+
+          if (!res.ok) {
+            messageEl.textContent = result.error || "Validation failed.";
+            messageEl.className = "error";
+          } else {
+            messageEl.textContent = `User created: ${result.name}`;
+            messageEl.className = "success";
+            form.reset();
+          }
+        } catch (err) {
+          messageEl.textContent = "Network error.";
+          messageEl.className = "error";
+        }
+      });
+    </script>
+  </body>
+</html>

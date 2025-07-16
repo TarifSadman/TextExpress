@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>All Users with Filter</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2rem;
+        max-width: 600px;
+        margin: auto;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+      }
+
+      ul {
+        list-style-type: none;
+        padding-left: 0;
+      }
+
+      li {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+
+      .error {
+        color: red;
+      }
+
+      mark {
+        background: yellow;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Registered Users</h2>
+
+    <input
+      type="text"
+      id="filterInput"
+      placeholder="Search by name or email..."
+    />
+
+    <p id="userCount"></p>
+    <div id="message" class="error"></div>
+    <ul id="userList"></ul>
+
+    <script>
+      function debounce(fn, delay) {
+        let timeout;
+        return function (...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+
+      function highlightMatch(text, keyword) {
+        if (!keyword) return text;
+        const regex = new RegExp(`(${keyword})`, "gi");
+        return text.replace(regex, "<mark>$1</mark>");
+      }
+
+      function displayUsers(users, keyword = "") {
+        const list = document.getElementById("userList");
+        const countEl = document.getElementById("userCount");
+        list.innerHTML = "";
+
+        countEl.textContent = `Total users: ${users.length}`;
+
+        if (users.length === 0) {
+          list.innerHTML = "<li>No users found.</li>";
+          return;
+        }
+
+        users.forEach((user) => {
+          const li = document.createElement("li");
+          li.innerHTML = `${highlightMatch(
+            user.name,
+            keyword
+          )} (${highlightMatch(user.email, keyword)})`;
+          list.appendChild(li);
+        });
+      }
+
+      async function loadUsers(search = "") {
+        try {
+          const url =
+            search.trim() === ""
+              ? "http://localhost:3000/users"
+              : "http://localhost:3000/users?search=" +
+                encodeURIComponent(search);
+
+          const res = await fetch(url);
+          const users = await res.json();
+
+          displayUsers(users, search.trim().toLowerCase());
+        } catch (err) {
+          document.getElementById("message").textContent =
+            "Failed to load users.";
+        }
+      }
+
+      const handleFilter = debounce((e) => {
+        const keyword = e.target.value;
+        loadUsers(keyword);
+      }, 300);
+
+      document
+        .getElementById("filterInput")
+        .addEventListener("input", handleFilter);
+
+      loadUsers();
+    </script>
+  </body>
+</html>
